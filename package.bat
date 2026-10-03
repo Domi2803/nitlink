@@ -2,7 +2,7 @@
 REM ============================================================================
 REM package.bat: Build a NitLink release zip for distribution / testing.
 REM
-REM Usage:  double-click, or run from cmd in the repo root.
+REM Usage:  double-click, or run "package.bat [version]" from the repo root.
 REM
 REM Assumes a Release build has already been produced at:
 REM  out\build\x64-Release\NitLink.exe
@@ -14,12 +14,13 @@ setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 if errorlevel 1 (
   echo [ERROR] Could not open the package source directory.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
 REM --- Configuration ---------------------------------------------------------
-set VERSION=1.2.3
+set "VERSION=%~1"
+if not defined VERSION set "VERSION=1.2.4"
 set BUILD_DIR=out\build\x64-Release
 set BUILD_DIR_ALT=build\Release
 set STAGING_DIR=NitLink-%VERSION%-win64
@@ -46,7 +47,7 @@ if not exist "%BUILD_DIR%\NitLink.exe" (
     echo Build the x64-Release configuration first ^(Visual Studio: Build menu,
     echo or cmake --build build --config Release^), then re-run this script.
     echo.
-    pause
+    if not defined CI pause
     exit /b 1
   )
 )
@@ -74,7 +75,7 @@ echo Copying NitLink.exe...
 copy /y "%BUILD_DIR%\NitLink.exe" "%STAGING_DIR%\" >nul
 if errorlevel 1 (
   echo [ERROR] Failed to copy NitLink.exe
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -85,7 +86,7 @@ if errorlevel 1 (
   copy /y "nitlink-menu.html" "%STAGING_DIR%\" >nul
   if errorlevel 1 (
     echo [ERROR] nitlink-menu.html not found anywhere; settings menu will not work.
-    pause
+    if not defined CI pause
     exit /b 1
   )
 )
@@ -94,13 +95,13 @@ echo Copying localization resources...
 copy /y "%BUILD_DIR%\locales\en-US.js" "%STAGING_DIR%\locales\" >nul
 if errorlevel 1 (
   echo [ERROR] en-US localization resource is missing from the build output.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 copy /y "%BUILD_DIR%\locales\zh-TW.js" "%STAGING_DIR%\locales\" >nul
 if errorlevel 1 (
   echo [ERROR] zh-TW localization resource is missing from the build output.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -109,7 +110,7 @@ for %%F in (menu.js Archivo-400.ttf Archivo-500.ttf Archivo-600.ttf Archivo-OFL.
   copy /y "%BUILD_DIR%\assets\menu\%%F" "%STAGING_DIR%\assets\menu\" >nul
   if errorlevel 1 (
     echo [ERROR] Required settings asset %%F is missing from the build output.
-    pause
+    if not defined CI pause
     exit /b 1
   )
 )
@@ -121,7 +122,7 @@ if errorlevel 1 (
   copy /y "third_party\nis\NIS_Scaler.h" "%STAGING_DIR%\third_party\nis\" >nul
   if errorlevel 1 (
     echo [ERROR] NIS_Scaler.h not found; NIS upscaling will fail at runtime.
-    pause
+    if not defined CI pause
     exit /b 1
   )
 )
@@ -131,7 +132,7 @@ echo Copying LICENSE (project MIT)...
 copy /y "LICENSE" "%STAGING_DIR%\" >nul
 if errorlevel 1 (
   echo [ERROR] LICENSE file not found at repo root.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -139,7 +140,7 @@ echo Copying LICENSES.md (third-party notices)...
 copy /y "LICENSES.md" "%STAGING_DIR%\" >nul
 if errorlevel 1 (
   echo [ERROR] LICENSES.md not found at repo root.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -147,7 +148,7 @@ echo Copying ACKNOWLEDGMENTS.md (non-bundled research references)...
 copy /y "ACKNOWLEDGMENTS.md" "%STAGING_DIR%\" >nul
 if errorlevel 1 (
   echo [ERROR] ACKNOWLEDGMENTS.md not found at repo root.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -155,7 +156,7 @@ echo Copying docs\4ks-hdr-tonemap.md (referenced by ACKNOWLEDGMENTS.md)...
 copy /y "docs\4ks-hdr-tonemap.md" "%STAGING_DIR%\docs\" >nul
 if errorlevel 1 (
   echo [ERROR] docs\4ks-hdr-tonemap.md not found at repo root.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -163,7 +164,7 @@ echo Copying NIS LICENSE.txt...
 copy /y "third_party\nis\LICENSE.txt" "%STAGING_DIR%\third_party\nis\" >nul
 if errorlevel 1 (
   echo [ERROR] third_party\nis\LICENSE.txt not found.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -171,7 +172,7 @@ echo Copying release notes...
 copy /y "release-notes-%VERSION%.md" "%STAGING_DIR%\RELEASE-NOTES.md" >nul
 if errorlevel 1 (
   echo [ERROR] Release notes are missing.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -248,7 +249,7 @@ REM Validate the exact file set and any redistributed Microsoft runtime DLLs.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\validate-package.ps1" -Path "%STAGING_DIR%"
 if errorlevel 1 (
   echo [ERROR] Package validation failed.
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -258,7 +259,7 @@ echo Creating zip: %OUTPUT_ZIP%
 powershell -NoProfile -Command "Compress-Archive -Path '%STAGING_DIR%' -DestinationPath '%OUTPUT_ZIP%' -Force"
 if errorlevel 1 (
   echo [ERROR] Failed to create zip
-  pause
+  if not defined CI pause
   exit /b 1
 )
 
@@ -285,5 +286,5 @@ REM --- Optional: leave staging dir in place for inspection -------------------
 REM  If you'd rather it cleans up automatically, uncomment the next line:
 REM rmdir /s /q "%STAGING_DIR%"
 
-pause
+if not defined CI pause
 endlocal

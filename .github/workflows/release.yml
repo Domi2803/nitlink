@@ -1,0 +1,68 @@
+name: Build and publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Read and verify version
+        id: version
+        shell: pwsh
+        run: |
+          $cmake = Get-Content -LiteralPath CMakeLists.txt -Raw
+          if ($cmake -notmatch 'project\(NitLink VERSION ([0-9]+\.[0-9]+\.[0-9]+)') {
+            throw 'Could not read the NitLink version from CMakeLists.txt.'
+          }
+          $version = $Matches[1]
+          $tagVersion = '${{ github.ref_name }}' -replace '^v', ''
+          if ($tagVersion -ne $version) {
+            throw "Tag version $tagVersion does not match CMake project version $version."
+          }
+          if (!(Test-Path -LiteralPath "release-notes-$version.md")) {
+            throw "release-notes-$version.md is missing."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "archive=NitLink-$version-win64.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build and test
+        run: |
+          cmake --build build --config Release --parallel
+          ctest --test-dir build -C Release --output-on-failure
+
+      - name: Package
+        shell: cmd
+        run: package.bat ${{ steps.version.outputs.version }}
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NitLink-${{ steps.version.outputs.version }}-win64
+          path: ${{ steps.version.outputs.archive }}
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.version.outputs.archive }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if (gh release view '${{ github.ref_name }}' --repo '${{ github.repository }}' 2>$null) {
+            gh release upload '${{ github.ref_name }}' $env:ARCHIVE --clobber --repo '${{ github.repository }}'
+            gh release edit '${{ github.ref_name }}' --notes-file "release-notes-$env:VERSION.md" --repo '${{ github.repository }}'
+          } else {
+            gh release create '${{ github.ref_name }}' $env:ARCHIVE --verify-tag --title "NitLink $env:VERSION" --notes-file "release-notes-$env:VERSION.md" --repo '${{ github.repository }}'
+          }

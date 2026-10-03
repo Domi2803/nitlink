@@ -689,6 +689,7 @@
       setToggle('toggle-vsync', s.vsync);
       setToggle('toggle-low-latency', s.lowLatency);
       setToggle('toggle-prevent-sleep', s.preventSleep);
+      setToggle('toggle-discord-rpc', s.discordRpcEnabled);
       if (s.presentPacing) {
         setText('pacing-val',
           s.presentPacing === 'unique'   ? t('value.sourceFrameRate') :

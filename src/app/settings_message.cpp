@@ -183,7 +183,8 @@ std::optional<SettingsMessage> ParseSettingsMessage(std::wstring_view json) {
         L"openScreenshotFolder"})) {
         if (value) return std::nullopt;
     } else if (OneOf(action, {L"toggleHDR", L"toggleColorExpansion", L"toggleNIS",
-        L"toggleMute", L"toggleVSync", L"toggleLowLatency", L"togglePreventSleep"})) {
+        L"toggleMute", L"toggleVSync", L"toggleLowLatency", L"togglePreventSleep",
+        L"toggleDiscordRPC"})) {
         // Existing controls send the next visual state; native toggles remain authoritative.
         if (value && value->kind != Value::Kind::Boolean) return std::nullopt;
     } else if (action == L"setVolume" || action == L"setPiPOpacity") {

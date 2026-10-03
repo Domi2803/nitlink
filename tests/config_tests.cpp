@@ -21,7 +21,8 @@ int main()
     if (legacyLoaded.noSignalMode != "default" ||
         !legacyLoaded.noSignalImage.empty() ||
         legacyLoaded.noSignalFit != "contain" ||
-        !legacyLoaded.noSignalDimImage) return 2;
+        !legacyLoaded.noSignalDimImage ||
+        !legacyLoaded.discordRpcEnabled) return 2;
 
     NitLink::Config defaults;
     if (!defaults.Save(path.string())) return 3;
@@ -30,7 +31,8 @@ int main()
     if (defaultLoaded.noSignalMode != "default" ||
         !defaultLoaded.noSignalImage.empty() ||
         defaultLoaded.noSignalFit != "contain" ||
-        !defaultLoaded.noSignalDimImage) return 5;
+        !defaultLoaded.noSignalDimImage ||
+        !defaultLoaded.discordRpcEnabled) return 5;
 
     NitLink::Config saved;
     saved.noSignalMode = "image";
@@ -38,6 +40,25 @@ int main()
         "C:\\Users\\測試者\\Pictures\\無訊號圖片.png";
     saved.noSignalFit = "cover";
     saved.noSignalDimImage = false;
+    saved.discordRpcEnabled = false;
+
+    NitLink::CaptureFormatOverride switchFormat;
+    switchFormat.width = 1920;
+    switchFormat.height = 1080;
+    switchFormat.fps = 60;
+    switchFormat.fpsNumerator = 60000;
+    switchFormat.fpsDenominator = 1001;
+    switchFormat.format = L"NV12";
+    saved.captureFormatOverrides[L"USB Video (Nintendo Switch)"] = switchFormat;
+
+    NitLink::CaptureFormatOverride genericFormat;
+    genericFormat.width = 3840;
+    genericFormat.height = 2160;
+    genericFormat.fps = 30;
+    genericFormat.fpsNumerator = 30;
+    genericFormat.fpsDenominator = 1;
+    genericFormat.format = L"BGRA";
+    saved.captureFormatOverrides[L"Generic HDMI Capture"] = genericFormat;
     if (!saved.Save(path.string())) return 6;
 
     NitLink::Config loaded;
@@ -45,7 +66,16 @@ int main()
     if (loaded.noSignalMode != saved.noSignalMode ||
         loaded.noSignalImage != saved.noSignalImage ||
         loaded.noSignalFit != saved.noSignalFit ||
-        loaded.noSignalDimImage != saved.noSignalDimImage) return 8;
+        loaded.noSignalDimImage != saved.noSignalDimImage ||
+        loaded.discordRpcEnabled ||
+        loaded.captureFormatOverrides.size() != 2) return 8;
+    const auto loadedSwitch = loaded.GetOverride(L"USB Video (Nintendo Switch)");
+    const auto loadedGeneric = loaded.GetOverride(L"Generic HDMI Capture");
+    if (loadedSwitch.width != 1920 || loadedSwitch.height != 1080 ||
+        loadedSwitch.fpsNumerator != 60000 || loadedSwitch.fpsDenominator != 1001 ||
+        loadedSwitch.format != L"NV12" || loadedGeneric.width != 3840 ||
+        loadedGeneric.height != 2160 || loadedGeneric.fps != 30 ||
+        loadedGeneric.format != L"BGRA") return 18;
 
     saved.noSignalFit = "stretch";
     saved.noSignalDimImage = true;

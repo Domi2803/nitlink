@@ -75,7 +75,7 @@ NitLink is NOT for you if:
 - **WASAPI audio routing** with volume + mute.
 - **Borderless fullscreen** and **picture-in-picture**.
 - **Prevent sleep while playing.** Enabled by default while captured video is visible, including paused games. Releases when minimized, hidden, showing No signal or closed. Turn off **Prevent sleep** in F1 to keep normal Windows idle sleep behavior. Windows power settings are not changed; manual sleep and policy-enforced screen locking remain available.
-- **Discord Rich Presence** showing playing NitLink. Uses Discord's local IPC pipe only; NitLink itself makes no network connections.
+- **Optional Discord Rich Presence** showing NitLink as a console-neutral capture viewer. Disable it from **F1 → About → Integrations** to prevent NitLink from opening Discord's local IPC pipe; NitLink itself makes no network connections.
 - **Multi-device source picker.** Live capture-device list in the F1 settings sidebar. Click a connected device to switch without restarting; the selection persists. Generic devices remain SDR-only unless they have an explicit capture policy, such as the GC553Pro native P010/HDR path.
 - **Smart signal handling.** Brief HDMI handshake windows (PS5 boot logo, source switch, SDR ↔ HDR transitions) keep showing the last good frame instead of the card's NO SIGNAL placeholder. Real signal loss is detected by format-tagged content fingerprints with a temporal-stability gate.
 
@@ -225,6 +225,10 @@ cmake --build build --config Release
 
 Output at `out/build/x64-Release/NitLink.exe` (VS) or `build/Release/NitLink.exe` (CLI). The build copies `nitlink-menu.html`, `locales/en-US.js`, `locales/zh-TW.js`, the complete `assets/menu` folder and `third_party/nis/NIS_Scaler.h` beside the `.exe`, preserving their subfolders (all are needed at runtime).
 
+### Publishing a release
+
+The `Build and publish release` GitHub Actions workflow runs when a `v<version>` tag is pushed. The tag must match the version in `CMakeLists.txt`, and `release-notes-<version>.md` must exist. The workflow builds and tests the Windows app, validates and archives the runtime files, then creates or updates that tag's GitHub Release in the repository where the workflow runs. This means tags pushed to a fork publish to that fork's Releases page using its built-in `GITHUB_TOKEN`.
+
 ---
 
 ## Hotkeys
@@ -276,6 +280,8 @@ Settings live in `nitlink.json` in the working directory (normally next to the e
 - `present_cap_hz`: present-rate cap in Hz for the low-latency present (default `0` = automatic: monitor refresh minus 3, applied when that is at least the source frame rate). `30` to `1000` = fixed cap, `-1` = off. Bypassed while VSync is enabled.
 
 - `aspect_ratio`: `auto` (default, the ratio the card reports), `stretch` (fill the window), or a fixed ratio such as `4:3`, `16:9`, `16:10`, `21:9`. Restores 4:3 sources that a card delivers stretched inside a 16:9 frame. Cycle with `Alt+A` or from the F1 panel.
+- `discord_rpc_enabled`: enables the local Discord Rich Presence connection (default `true`). The presence text is console-neutral, so it works for Nintendo Switch, Xbox, PlayStation, retro consoles, cameras, and other HDMI sources.
+- Capture resolution, frame rate, and pixel format choices from the F1 Source picker are stored separately for every capture-device name, including non-Elgato Media Foundation devices, and restored when that device is selected again.
 - `no_signal_mode`: `default` (NitLink's branded page) or `image`. With `image`, choose a local PNG, JPEG/JPG, or BMP from the F1 **No Signal** section. `no_signal_image` is stored as UTF-8; `no_signal_fit` accepts `contain`, `cover`, or `stretch`, and `no_signal_dim_image` controls the optional 40% black dim layer (`true` by default). The image keeps its intrinsic aspect ratio, remains independent of the normal capture `aspect_ratio`, and is decoded into a cache instead of being read from disk every frame. Custom No Signal images must be on a local drive; UNC shares and mapped network drives are unsupported. Large photos are scaled to a bounded pixel buffer. Files above 512 MiB or 16384 pixels per side produce a visible size warning. GIF, WebP, TIFF, and HEIC are unsupported. With no image selected, the branded screen stays visible.
 - `panel_side`: `right` (default), `left`, or `full`. Right and left open the F1 panel as a strip beside the picture, which keeps playing underneath. Full covers the window with the wide layout. `panel_width` is the docked width in device-independent pixels (default `420`). Cycle the position from the panel's Video tab.
 - `nis_enabled` / `nis_sharpness` / `nis_scale_mode`: NIS upscaler config.

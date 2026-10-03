@@ -418,6 +418,7 @@ bool Config::Load(const std::string& path)
         if (key == "panel_width")    panelWidth   = ParseI32(val, panelWidth, 320, 1200);
         if (key == "enable_shaders")  enableShaders = ParseBool(val);
         if (key == "show_overlay")    showOverlay   = ParseBool(val);
+        if (key == "discord_rpc_enabled") discordRpcEnabled = ParseBool(val);
         if (key == "current_game" && IsGameId(val)) currentGameId = val;
         if (key == "preferred_device") {
             if (val.size() <= 4096) preferredDevice = ConfigWide(val);
@@ -697,6 +698,9 @@ bool Config::Save(const std::string& path)
 
     file << "# Overlay\n";
     file << "show_overlay = " << (showOverlay ? "true" : "false") << "\n\n";
+
+    file << "# Discord Rich Presence (local IPC only)\n";
+    file << "discord_rpc_enabled = " << (discordRpcEnabled ? "true" : "false") << "\n\n";
 
     // ===== Game state =====
     file << "# Current Game (empty if none selected)\n";

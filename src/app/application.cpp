@@ -1313,6 +1313,12 @@ bool Application::Initialize(HINSTANCE hInstance, int nCmdShow)
             m_config->Save("nitlink.json");
             return;
         }
+        if (action == L"toggleDiscordRPC" && m_config) {
+            SetDiscordRPCEnabled(!m_config->discordRpcEnabled);
+            m_config->Save("nitlink.json");
+            PushSettingsState();
+            return;
+        }
         if (action == L"setVolume" && m_config && m_audioRouter) {
             const float volume = static_cast<float>(message->number);
             m_config->audioVolume = volume;
@@ -1488,21 +1494,7 @@ bool Application::Initialize(HINSTANCE hInstance, int nCmdShow)
     // are simply skipped. Application keeps working normally. The app ID is
     // hardcoded to the NitLink application registered at
     // discord.com/developers/applications.
-    m_discord = std::make_unique<DiscordRPC>();
-    if (m_discord->Connect("1505211372286246944")) {
-        AppLog(L"Initialize: Discord RPC connected");
-        // Set initial "idle" presence. This will be overwritten the moment
-        // the user selects a game from the settings menu.
-        m_discord->SetActivity(
-            L"In NitLink",
-            L"PS5 Capture Viewer",
-            std::chrono::system_clock::now(),
-            "nitlink-logo",
-            L"NitLink"
-        );
-    } else {
-        AppLog(L"Initialize: Discord RPC unavailable (Discord not running or RPC disabled)");
-    }
+    SetDiscordRPCEnabled(m_config && m_config->discordRpcEnabled);
 
     // If config restored a previously-selected game, apply its per-game
     // settings to the live pipeline and reflect on Discord. Do this AFTER
@@ -4909,6 +4901,7 @@ void Application::PushSettingsState(bool refreshCaptureDevices)
     js << L"\"vsync\":"             << (m_config->vsync ? L"true" : L"false") << L",";
     js << L"\"lowLatency\":"        << (m_config->lowLatency        ? L"true" : L"false") << L",";
     js << L"\"preventSleep\":"      << (m_config->preventSleep      ? L"true" : L"false") << L",";
+    js << L"\"discordRpcEnabled\":" << (m_config->discordRpcEnabled ? L"true" : L"false") << L",";
     js << L"\"audioMuted\":"        << (m_config->audioMuted        ? L"true" : L"false") << L",";
     js << L"\"volume\":"            << m_config->audioVolume        << L",";
     js << L"\"pipOpacity\":"        << m_config->pipOpacity         << L",";
@@ -5150,7 +5143,7 @@ void Application::UpdateDiscordForCurrentGame()
         // No game: back to idle presence
         m_discord->SetActivity(
             L"In NitLink",
-            L"PS5 Capture Viewer",
+            L"Capture card viewer",
             std::chrono::system_clock::now(),
             "nitlink-logo",
             L"NitLink"
@@ -5175,11 +5168,36 @@ void Application::UpdateDiscordForCurrentGame()
     // back to no image: the text still shows fine.
     m_discord->SetActivity(
         title,                                      // "Spider-Man 2"
-        L"Playing on PS5",                          // state line under title
+        L"Playing via NitLink",                     // console-neutral state line
         std::chrono::system_clock::now(),           // restart elapsed timer
         m_config->currentGameId,                    // large image asset key
         title                                       // tooltip when hovering image
     );
+}
+
+void Application::SetDiscordRPCEnabled(bool enabled)
+{
+    if (m_config) m_config->discordRpcEnabled = enabled;
+
+    if (!enabled) {
+        if (m_discord) {
+            m_discord->Disconnect();
+            m_discord.reset();
+        }
+        AppLog(L"Discord RPC disabled");
+        return;
+    }
+
+    if (m_discord) return;
+    auto discord = std::make_unique<DiscordRPC>();
+    if (!discord->Connect("1505211372286246944")) {
+        AppLog(L"Discord RPC unavailable (Discord is not running)");
+        return;
+    }
+
+    m_discord = std::move(discord);
+    AppLog(L"Discord RPC connected");
+    UpdateDiscordForCurrentGame();
 }
 
 void Application::TakeScreenshot()

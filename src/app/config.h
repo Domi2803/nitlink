@@ -206,6 +206,10 @@ struct Config {
     
     // Performance overlay
     bool showOverlay = false;
+
+    // Optional Discord Rich Presence integration. When disabled, NitLink
+    // never opens Discord's local IPC pipe and clears any active presence.
+    bool discordRpcEnabled = true;
     
     // PSN (for game detection)
     std::string psnNpsso = ""; // Auth token

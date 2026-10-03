@@ -76,6 +76,7 @@ private:
     // title/art-key to Rich Presence (or clears it when gameId is empty).
     void ApplyGameSettings(const std::string& gameId);
     void UpdateDiscordForCurrentGame();
+    void SetDiscordRPCEnabled(bool enabled);
 
     // Capture-side HDR/SDR reconciliation. Compares the format the capture
     // device is currently running (P010 vs BGRA/NV12) against what the
