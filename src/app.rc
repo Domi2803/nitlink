@@ -28,12 +28,12 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "FileDescription", "NitLink"
-            VALUE "FileVersion", "1.2.4"
+            VALUE "FileVersion", "1.2.4-domi"
             VALUE "InternalName", "NitLink"
             VALUE "LegalCopyright", "Copyright (c) 2026 NitLink Contributors"
             VALUE "OriginalFilename", "NitLink.exe"
             VALUE "ProductName", "NitLink"
-            VALUE "ProductVersion", "1.2.4"
+            VALUE "ProductVersion", "1.2.4-domi"
         END
     END
     BLOCK "VarFileInfo"

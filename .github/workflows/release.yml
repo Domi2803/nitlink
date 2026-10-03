@@ -20,8 +20,8 @@ jobs:
         shell: pwsh
         run: |
           $cmake = Get-Content -LiteralPath CMakeLists.txt -Raw
-          if ($cmake -notmatch 'project\(NitLink VERSION ([0-9]+\.[0-9]+\.[0-9]+)') {
-            throw 'Could not read the NitLink version from CMakeLists.txt.'
+          if ($cmake -notmatch 'set\(NITLINK_RELEASE_VERSION "([^"]+)"\)') {
+            throw 'Could not read the NitLink release version from CMakeLists.txt.'
           }
           $version = $Matches[1]
           $tagVersion = '${{ github.ref_name }}' -replace '^v', ''

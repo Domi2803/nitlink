@@ -20,7 +20,7 @@ if errorlevel 1 (
 
 REM --- Configuration ---------------------------------------------------------
 set "VERSION=%~1"
-if not defined VERSION set "VERSION=1.2.4"
+if not defined VERSION set "VERSION=1.2.4-domi"
 set BUILD_DIR=out\build\x64-Release
 set BUILD_DIR_ALT=build\Release
 set STAGING_DIR=NitLink-%VERSION%-win64

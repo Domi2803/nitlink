@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(NitLink VERSION 1.2.4 LANGUAGES CXX)
 
+# Distribution label for this fork. Keep project()'s VERSION numeric because
+# CMake and Windows resource metadata require numeric version components.
+set(NITLINK_RELEASE_VERSION "1.2.4-domi")
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
